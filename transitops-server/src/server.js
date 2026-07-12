@@ -14,7 +14,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get("/health", (req, res) => res.json({ status: "ok", version: 2 }));
+
+app.get("/ping-db", async (req, res) => {
+  try {
+    const prisma = require('./utils/prisma');
+    const count = await prisma.user.count();
+    res.json({ status: "ok", count });
+  } catch (err) {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+
+process.on('uncaughtException', err => console.error('UNCAUGHT:', err));
+process.on('unhandledRejection', err => console.error('UNHANDLED:', err));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/vehicles", vehicleRoutes);
