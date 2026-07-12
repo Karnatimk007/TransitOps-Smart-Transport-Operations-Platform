@@ -1,1 +1,7 @@
-GET http://localhost:5000/test-db
+POST http://localhost:5000/commonapi/login
+Content-Type: application/json
+
+{
+    "email": "john.doe@example.com",
+    "password": "admin"
+}   
