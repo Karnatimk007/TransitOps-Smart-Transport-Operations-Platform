@@ -1,0 +1,149 @@
+// TransitOps - Smart Transport Operations Platform
+// Prisma schema (SQLite)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- ENUMS ----------
+
+// SQLite doesn't natively support enums in the same way, but Prisma handles them 
+// at the application level when using SQLite if we just use strings or we can keep 
+// the enums and Prisma will polyfill it for SQLite. Actually, Prisma does NOT 
+// support enums for SQLite. We must change Enums to Strings.
+
+// Wait, if I change them to Strings, I just need to remove the enum definitions 
+// and use String for the fields, maybe with default values.
+
+// Let me use String for Role, VehicleStatus, DriverStatus, TripStatus, ExpenseType.
+
+// ---------- CORE ENTITIES ----------
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   // FLEET_MANAGER, DRIVER, SAFETY_OFFICER, FINANCIAL_ANALYST
+  region       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  driverProfile Driver? @relation("UserDriverProfile")
+  trips_created Trip[]  @relation("TripCreatedBy")
+}
+
+model Vehicle {
+  id               String        @id @default(uuid())
+  registrationNo   String        @unique
+  name             String
+  type             String
+  maxLoadCapacityKg Float
+  odometerKm       Float         @default(0)
+  acquisitionCost  Float
+  status           String        @default("AVAILABLE") // AVAILABLE, ON_TRIP, IN_SHOP, RETIRED
+  region           String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  trips            Trip[]
+  maintenanceLogs  MaintenanceLog[]
+  fuelLogs         FuelLog[]
+  expenses         Expense[]
+
+  @@index([status])
+  @@index([type])
+}
+
+model Driver {
+  id               String       @id @default(uuid())
+  userId           String?      @unique
+  user             User?        @relation("UserDriverProfile", fields: [userId], references: [id])
+  name             String
+  licenseNumber    String       @unique
+  licenseCategory  String
+  licenseExpiry    DateTime
+  contactNumber    String
+  safetyScore      Int          @default(100)
+  status           String       @default("AVAILABLE") // AVAILABLE, ON_TRIP, OFF_DUTY, SUSPENDED
+  region           String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  trips            Trip[]
+
+  @@index([status])
+}
+
+model Trip {
+  id             String     @id @default(uuid())
+  source         String
+  destination    String
+  vehicleId      String
+  vehicle        Vehicle    @relation(fields: [vehicleId], references: [id])
+  driverId       String
+  driver         Driver     @relation(fields: [driverId], references: [id])
+  cargoWeightKg  Float
+  plannedDistanceKm Float
+  actualDistanceKm  Float?
+  fuelConsumedL     Float?
+  revenue           Float?
+  status         String     @default("DRAFT") // DRAFT, DISPATCHED, COMPLETED, CANCELLED
+  createdById    String
+  createdBy      User       @relation("TripCreatedBy", fields: [createdById], references: [id])
+  dispatchedAt   DateTime?
+  completedAt    DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([status])
+  @@index([vehicleId])
+  @@index([driverId])
+}
+
+model MaintenanceLog {
+  id          String    @id @default(uuid())
+  vehicleId   String
+  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id])
+  description String
+  cost        Float
+  startedAt   DateTime  @default(now())
+  closedAt    DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  @@index([vehicleId])
+  @@index([isActive])
+}
+
+model FuelLog {
+  id        String   @id @default(uuid())
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+  liters    Float
+  cost      Float
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([vehicleId])
+}
+
+model Expense {
+  id        String      @id @default(uuid())
+  vehicleId String
+  vehicle   Vehicle     @relation(fields: [vehicleId], references: [id])
+  type      String      // TOLL, MAINTENANCE, OTHER
+  amount    Float
+  date      DateTime    @default(now())
+  notes     String?
+  createdAt DateTime    @default(now())
+
+  @@index([vehicleId])
+  @@index([type])
+}
