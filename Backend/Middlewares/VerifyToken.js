@@ -2,12 +2,12 @@ import jwt from "jsonwebtoken";
 
 export function VerifyToken(req, res, next) {
     try {
-        const token =
-            req.cookies.token;
-        console.log("Token from cookies:", token);
+        const token = req.cookies?.token;
+
         if (!token) {
             return res.status(401).json({
-                message: "Unauthorized"
+                success: false,
+                message: "Access denied. No token provided.",
             });
         }
 
@@ -15,21 +15,20 @@ export function VerifyToken(req, res, next) {
 
         if (!jwtSecret) {
             return res.status(500).json({
-                message: "JWT secret is not configured"
+                success: false,
+                message: "JWT secret is not configured.",
             });
         }
 
-        const decoded = jwt.verify(
-            token,
-            jwtSecret
-        );
+        const decoded = jwt.verify(token, jwtSecret);
 
         req.user = decoded;
 
         next();
-    } catch (err) {
+    } catch (error) {
         return res.status(401).json({
-            message: "Invalid Token"
+            success: false,
+            message: "Invalid or expired token.",
         });
     }
 }
