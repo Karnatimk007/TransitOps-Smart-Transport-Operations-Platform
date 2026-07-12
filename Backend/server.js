@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import { db, connection } from "./Config/db.js";
+import commonApi from "./Apis/CommonApi.js";
 
 dotenv.config();
 
@@ -8,6 +9,7 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+app.use("/api/common", commonApi);
 
 // Test Route
 app.get("/", (req, res) => {
