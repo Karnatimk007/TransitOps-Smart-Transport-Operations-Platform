@@ -4,7 +4,7 @@ import axios from 'axios';
 // Axios instance – baseURL '/api' is proxied to the backend by Vite
 // ---------------------------------------------------------------------------
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://transitops-smart-transport-operations-00wz.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://transitops-smart-transport-operations-a12n.onrender.com/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
