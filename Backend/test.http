@@ -17,4 +17,5 @@ Content-Type: application/json
   "email": "john.doe@example.com",
   "password": "password123"
 }
-  
+###
+GET http://localhost:5000/api/common/profile 
